@@ -3,7 +3,9 @@ package chat
 import (
 	"log"
 	"net/http"
-
+	"time"
+	"strconv"
+	"math"
 	"golang.org/x/net/websocket"
 )
 
@@ -98,6 +100,8 @@ func (s *Server) Listen() {
 	http.Handle(s.pattern, websocket.Handler(onConnected))
 	log.Println("Created handler " + s.pattern)
 
+	go s.Tick()
+
 	for {
 		select {
 
@@ -126,4 +130,21 @@ func (s *Server) Listen() {
 			return
 		}
 	}
+}
+
+
+func (s* Server) Tick() {
+	ticker := time.NewTicker(time.Second/60.0)
+	cnt := 1.0
+	for{
+		select {
+			case <-ticker.C:
+			left := 10 + math.Sin(cnt) * 10
+			msg := Message{"game","player.style.left = " + strconv.Itoa(int(left))}
+			cnt += 0.2
+			if( cnt > 500 ){ cnt = 0.0 }
+			s.SendAll(&msg)
+		}
+	}
+
 }

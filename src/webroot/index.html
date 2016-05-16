@@ -6,7 +6,10 @@
     var wsUri = "wss://ragtime-mypianoplayer.c9users.io/entry";
 
     var output;
+    var player;
+
     function init() {
+        player = document.getElementById("player");
         output = document.getElementById("output");
         testWebSocket();
 
@@ -45,9 +48,9 @@
     }
 
     function onMessage(evt) {
-        // writeToScreen('<span style="color: blue;">RESPONSE: ' + jsonData.Msg+'</span>');
-        writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data + ' </span>');
-//        websocket.close();
+        var cmd = JSON.parse(evt.data);
+        eval(cmd.body);
+       // writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data + ' </span>');
     }
 
     function onError(evt) {
@@ -71,9 +74,10 @@
 </head>
 <body onload="init()">
     <h2>WebSocket Test</h2>
+    <div id="player" style="position:absolute;">[-]</-></div>
     AUTHOR:<input id="author" type="text"></input><br/>
     MESSAGE:<input id="body" type="text"></inpuut><br/>
     <input id="sendbutton" type="button" value="SEND"></input><br/>
-    LOG:<div id="output">abc</div>
+    LOG:<div id="output"></div>
 </body>
 </html>

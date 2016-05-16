@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"code.google.com/p/go.net/websocket"
+	"golang.org/x/net/websocket"
 )
 
 // Chat server.
@@ -81,6 +81,9 @@ func (s *Server) Listen() {
 
 	// websocket handler
 	onConnected := func(ws *websocket.Conn) {
+
+		log.Println("ON CONNECT CALLED")
+
 		defer func() {
 			err := ws.Close()
 			if err != nil {
@@ -93,7 +96,7 @@ func (s *Server) Listen() {
 		client.Listen()
 	}
 	http.Handle(s.pattern, websocket.Handler(onConnected))
-	log.Println("Created handler")
+	log.Println("Created handler " + s.pattern)
 
 	for {
 		select {

@@ -5,7 +5,7 @@ import (
 	"io"
 	"log"
 
-	"code.google.com/p/go.net/websocket"
+	"golang.org/x/net/websocket"
 )
 
 const channelBufSize = 100
@@ -31,6 +31,8 @@ func NewClient(ws *websocket.Conn, server *Server) *Client {
 	if server == nil {
 		panic("server cannot be nil")
 	}
+
+	log.Println("new client")
 
 	maxId++
 	ch := make(chan *Message, channelBufSize)
@@ -103,6 +105,8 @@ func (c *Client) listenRead() {
 				c.doneCh <- true
 			} else if err != nil {
 				c.server.Err(err)
+			} else if msg.Body == "close" {
+				c.doneCh <- true
 			} else {
 				c.server.SendAll(&msg)
 			}

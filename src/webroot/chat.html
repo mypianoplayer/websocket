@@ -7,18 +7,17 @@
 
     var output;
     var player;
-    var websocket;
 
     function init() {
         player = document.getElementById("player");
         output = document.getElementById("output");
         testWebSocket();
 
-        var sendbutton = document.getElementById("sendbutton");
+        sendbutton = document.getElementById("sendbutton")
         sendbutton.onclick = function(evt){
-            var author = document.getElementById("author");
-            var body = document.getElementById("body");
-            doSend('{"author":"' + author.value + '","body":"' + body.value + '"}');
+            author = document.getElementById("author")
+            body = document.getElementById("body")
+            doSend('{"author":"' + author.value + '","body":"' + body.value + '"}')
 //            doSend('{"author":"test","body":"hello"}')
         };
     }
@@ -75,16 +74,10 @@
 </head>
 <body onload="init()">
     <h2>WebSocket Test</h2>
-    <br/>
-    <br/>
     <div id="player" style="position:absolute;">[-]</-></div>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
+    AUTHOR:<input id="author" type="text"></input><br/>
+    MESSAGE:<input id="body" type="text"></inpuut><br/>
+    <input id="sendbutton" type="button" value="SEND"></input><br/>
     LOG:<div id="output"></div>
 </body>
 </html>

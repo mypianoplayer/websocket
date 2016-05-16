@@ -6,6 +6,7 @@ import (
 	"time"
 	"strconv"
 	"math"
+	"sync"
 	"golang.org/x/net/websocket"
 )
 
@@ -19,6 +20,7 @@ type Server struct {
 	sendAllCh chan *Message
 	doneCh    chan bool
 	errCh     chan error
+	mtx       *sync.Mutex
 }
 
 // Create new chat server.
@@ -30,6 +32,7 @@ func NewServer(pattern string) *Server {
 	sendAllCh := make(chan *Message)
 	doneCh := make(chan bool)
 	errCh := make(chan error)
+	mtx := new(sync.Mutex)
 
 	return &Server{
 		pattern,
@@ -40,6 +43,7 @@ func NewServer(pattern string) *Server {
 		sendAllCh,
 		doneCh,
 		errCh,
+		mtx,
 	}
 }
 
@@ -70,9 +74,11 @@ func (s *Server) sendPastMessages(c *Client) {
 }
 
 func (s *Server) sendAll(msg *Message) {
+	s.mtx.Lock()
 	for _, c := range s.clients {
 		c.Write(msg)
 	}
+	s.mtx.Unlock()
 }
 
 // Listen and serve.
@@ -108,7 +114,9 @@ func (s *Server) Listen() {
 		// Add new a client
 		case c := <-s.addCh:
 			log.Println("Added new client")
+			s.mtx.Lock()
 			s.clients[c.id] = c
+			s.mtx.Unlock()
 			log.Println("Now", len(s.clients), "clients connected.")
 			s.sendPastMessages(c)
 
@@ -119,8 +127,8 @@ func (s *Server) Listen() {
 
 		// broadcast message for all clients
 		case msg := <-s.sendAllCh:
-			log.Println("Send all:", msg)
-			s.messages = append(s.messages, msg)
+//			log.Println("Send all:", msg)
+			//s.messages = append(s.messages, msg)
 			s.sendAll(msg)
 
 		case err := <-s.errCh:
@@ -134,12 +142,12 @@ func (s *Server) Listen() {
 
 
 func (s* Server) Tick() {
-	ticker := time.NewTicker(time.Second/60.0)
+	ticker := time.NewTicker(time.Second/30.0)
 	cnt := 1.0
 	for{
 		select {
 			case <-ticker.C:
-			left := 10 + math.Sin(cnt) * 10
+			left := 50 + math.Sin(cnt) * 30
 			msg := Message{"game","player.style.left = " + strconv.Itoa(int(left))}
 			cnt += 0.2
 			if( cnt > 500 ){ cnt = 0.0 }

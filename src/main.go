@@ -4,14 +4,15 @@ import (
 	"log"
 	"net/http"
 
-	"chat"
+	"network"
 )
 
 func main() {
 	log.SetFlags(log.Lshortfile)
 
 	// websocket server
-	server := chat.NewServer("/entry")
+//	server := chat.NewServer("/entry")
+	server := network.NewServer("/game")
 	go server.Listen()
 
 	// static files

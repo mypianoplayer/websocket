@@ -1,4 +1,4 @@
-package chat
+package network
 
 import (
 	"log"
@@ -6,43 +6,38 @@ import (
 	"time"
 	"strconv"
 	"math"
-	"sync"
+//	"sync"
 	"golang.org/x/net/websocket"
 )
 
+// Chat server.
 type Server struct {
 	pattern   string
-	messages  []*Message
 	clients   map[int]*Client
 	addCh     chan *Client
 	delCh     chan *Client
 	sendAllCh chan *Message
 	doneCh    chan bool
 	errCh     chan error
-	mtx       *sync.Mutex
 }
 
 // Create new chat server.
 func NewServer(pattern string) *Server {
-	messages := []*Message{}
 	clients := make(map[int]*Client)
 	addCh := make(chan *Client)
 	delCh := make(chan *Client)
 	sendAllCh := make(chan *Message)
 	doneCh := make(chan bool)
 	errCh := make(chan error)
-	mtx := new(sync.Mutex)
 
 	return &Server{
 		pattern,
-		messages,
 		clients,
 		addCh,
 		delCh,
 		sendAllCh,
 		doneCh,
 		errCh,
-		mtx,
 	}
 }
 
@@ -66,18 +61,16 @@ func (s *Server) Err(err error) {
 	s.errCh <- err
 }
 
-func (s *Server) sendPastMessages(c *Client) {
-	for _, msg := range s.messages {
-		c.Write(msg)
-	}
-}
+// func (s *Server) sendPastMessages(c *Client) {
+// 	for _, msg := range s.messages {
+// 		c.Write(msg)
+// 	}
+// }
 
 func (s *Server) sendAll(msg *Message) {
-	s.mtx.Lock()
 	for _, c := range s.clients {
 		c.Write(msg)
 	}
-	s.mtx.Unlock()
 }
 
 // Listen and serve.
@@ -113,11 +106,8 @@ func (s *Server) Listen() {
 		// Add new a client
 		case c := <-s.addCh:
 			log.Println("Added new client")
-			s.mtx.Lock()
 			s.clients[c.id] = c
-			s.mtx.Unlock()
 			log.Println("Now", len(s.clients), "clients connected.")
-			s.sendPastMessages(c)
 
 		// del a client
 		case c := <-s.delCh:
@@ -127,7 +117,6 @@ func (s *Server) Listen() {
 		// broadcast message for all clients
 		case msg := <-s.sendAllCh:
 //			log.Println("Send all:", msg)
-			//s.messages = append(s.messages, msg)
 			s.sendAll(msg)
 
 		case err := <-s.errCh:

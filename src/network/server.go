@@ -98,8 +98,6 @@ func (s *Server) Listen() {
 	http.Handle(s.pattern, websocket.Handler(onConnected))
 	log.Println("Created handler " + s.pattern)
 
-	go s.Tick()
-
 	for {
 		select {
 

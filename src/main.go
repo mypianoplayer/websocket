@@ -3,8 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
-
-	"network"
+	"samplegame"
 )
 
 func main() {
@@ -12,8 +11,9 @@ func main() {
 
 	// websocket server
 //	server := chat.NewServer("/entry")
-	server := network.NewServer("/game")
-	go server.Listen()
+	// server := network.NewServer("/game")
+	// go server.Listen()
+	samplegame.Start()
 
 	// static files
 	http.Handle("/", http.FileServer(http.Dir("webroot")))

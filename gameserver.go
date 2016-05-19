@@ -1,4 +1,4 @@
-package network
+package ragtime
 
 import (
 	"log"
@@ -11,28 +11,28 @@ import (
 )
 
 // Chat server.
-type Server struct {
+type GameServer struct {
 	pattern   string
-	clients   map[int]*Client
-	addCh     chan *Client
-	delCh     chan *Client
+	connections   map[int]*Connection
+	addCh     chan *Connection
+	delCh     chan *Connection
 	sendAllCh chan *Message
 	doneCh    chan bool
 	errCh     chan error
 }
 
 // Create new chat server.
-func NewServer(pattern string) *Server {
-	clients := make(map[int]*Client)
-	addCh := make(chan *Client)
-	delCh := make(chan *Client)
+func NewGameServer(pattern string) *GameServer {
+	connections := make(map[int]*Connection)
+	addCh := make(chan *Connection)
+	delCh := make(chan *Connection)
 	sendAllCh := make(chan *Message)
 	doneCh := make(chan bool)
 	errCh := make(chan error)
 
-	return &Server{
+	return &GameServer{
 		pattern,
-		clients,
+		connections,
 		addCh,
 		delCh,
 		sendAllCh,
@@ -41,23 +41,23 @@ func NewServer(pattern string) *Server {
 	}
 }
 
-func (s *Server) Add(c *Client) {
+func (s *GameServer) Add(c *Connection) {
 	s.addCh <- c
 }
 
-func (s *Server) Del(c *Client) {
+func (s *GameServer) Del(c *Connection) {
 	s.delCh <- c
 }
 
-func (s *Server) SendAll(msg *Message) {
+func (s *GameServer) SendAll(msg *Message) {
 	s.sendAllCh <- msg
 }
 
-func (s *Server) Done() {
+func (s *GameServer) Done() {
 	s.doneCh <- true
 }
 
-func (s *Server) Err(err error) {
+func (s *GameServer) Err(err error) {
 	s.errCh <- err
 }
 
@@ -67,22 +67,20 @@ func (s *Server) Err(err error) {
 // 	}
 // }
 
-func (s *Server) sendAll(msg *Message) {
-	for _, c := range s.clients {
+func (s *GameServer) sendAll(msg *Message) {
+	for _, c := range s.connections {
 		c.Write(msg)
 	}
 }
 
 // Listen and serve.
 // It serves client connection and broadcast request.
-func (s *Server) Listen() {
+func (s *GameServer) Start() {
 
 	log.Println("Listening server...")
 
 	// websocket handler
 	onConnected := func(ws *websocket.Conn) {
-
-		log.Println("ON CONNECT CALLED")
 
 		defer func() {
 			err := ws.Close()
@@ -91,12 +89,15 @@ func (s *Server) Listen() {
 			}
 		}()
 
-		client := NewClient(ws, s)
-		s.Add(client)
-		client.Listen()
+		connection := NewConnection(ws, s)
+		s.Add(connection)
+		connection.Listen()
 	}
 	http.Handle(s.pattern, websocket.Handler(onConnected))
 	log.Println("Created handler " + s.pattern)
+
+
+	go s.Tick()
 
 	for {
 		select {
@@ -104,15 +105,15 @@ func (s *Server) Listen() {
 		// Add new a client
 		case c := <-s.addCh:
 			log.Println("Added new client")
-			s.clients[c.id] = c
-			log.Println("Now", len(s.clients), "clients connected.")
+			s.connections[c.id] = c
+			log.Println("Now", len(s.connections), "connections connected.")
 
 		// del a client
 		case c := <-s.delCh:
 			log.Println("Delete client")
-			delete(s.clients, c.id)
+			delete(s.connections, c.id)
 
-		// broadcast message for all clients
+		// broadcast message for all connections
 		case msg := <-s.sendAllCh:
 //			log.Println("Send all:", msg)
 			s.sendAll(msg)
@@ -127,7 +128,7 @@ func (s *Server) Listen() {
 }
 
 
-func (s* Server) Tick() {
+func (s* GameServer) Tick() {
 	ticker := time.NewTicker(time.Second/60.0)
 	cnt := 1.0
 	for{

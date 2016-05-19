@@ -1,4 +1,4 @@
-package network
+package ragtime
 
 import (
 	"fmt"
@@ -12,17 +12,17 @@ const channelBufSize = 100
 
 var maxId int = 0
 
-// Chat client.
-type Client struct {
+// Chat Connection.
+type Connection struct {
 	id     int
 	ws     *websocket.Conn
-	server *Server
+	server *GameServer
 	ch     chan *Message
 	doneCh chan bool
 }
 
-// Create new chat client.
-func NewClient(ws *websocket.Conn, server *Server) *Client {
+// Create new chat Connection.
+func NewConnection(ws *websocket.Conn, server *GameServer) *Connection {
 
 	if ws == nil {
 		panic("ws cannot be nil")
@@ -32,46 +32,46 @@ func NewClient(ws *websocket.Conn, server *Server) *Client {
 		panic("server cannot be nil")
 	}
 
-	log.Println("new client")
+	log.Println("new Connection")
 
 	maxId++
 	ch := make(chan *Message, channelBufSize)
 	doneCh := make(chan bool)
 
-	return &Client{maxId, ws, server, ch, doneCh}
+	return &Connection{maxId, ws, server, ch, doneCh}
 }
 
-func (c *Client) Conn() *websocket.Conn {
+func (c *Connection) Conn() *websocket.Conn {
 	return c.ws
 }
 
-func (c *Client) Write(msg *Message) {
+func (c *Connection) Write(msg *Message) {
 	select {
 	case c.ch <- msg:
 	default:
 		c.server.Del(c)
-		err := fmt.Errorf("client %d is disconnected.", c.id)
+		err := fmt.Errorf("Connection %d is disconnected.", c.id)
 		c.server.Err(err)
 	}
 }
 
-func (c *Client) Done() {
+func (c *Connection) Done() {
 	c.doneCh <- true
 }
 
 // Listen Write and Read request via chanel
-func (c *Client) Listen() {
+func (c *Connection) Listen() {
 	go c.listenWrite()
 	c.listenRead()
 }
 
 // Listen write request via chanel
-func (c *Client) listenWrite() {
-	log.Println("Listening write to client")
+func (c *Connection) listenWrite() {
+	log.Println("Listening write to Connection")
 	for {
 		select {
 
-		// send message to the client
+		// send message to the Connection
 		case msg := <-c.ch:
 //			log.Println("Send:", msg)
 			websocket.JSON.Send(c.ws, msg)
@@ -86,8 +86,8 @@ func (c *Client) listenWrite() {
 }
 
 // Listen read request via chanel
-func (c *Client) listenRead() {
-	log.Println("Listening read from client")
+func (c *Connection) listenRead() {
+	log.Println("Listening read from Connection")
 	for {
 		select {
 

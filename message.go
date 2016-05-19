@@ -1,4 +1,4 @@
-package network
+package ragtime
 
 type Message struct {
 	Author string `json:"author"`

@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
-	"samplegame"
+	"ragtime"
 )
 
 func main() {
@@ -13,8 +13,8 @@ func main() {
 //	server := chat.NewServer("/entry")
 	// server := network.NewServer("/game")
 	// go server.Listen()
-	samplegame.Start()
-
+	server := ragtime.NewGameServer("/game")
+	server.Start()
 	// static files
 	http.Handle("/", http.FileServer(http.Dir("webroot")))
 

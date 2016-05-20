@@ -79,8 +79,9 @@ func (s *GameServer) Start() {
 
 	log.Println("Listening server...")
 
-	// websocket handler
 	onConnected := func(ws *websocket.Conn) {
+
+		log.Println("CONNECTION>>>")
 
 		defer func() {
 			err := ws.Close()
@@ -93,7 +94,15 @@ func (s *GameServer) Start() {
 		s.Add(connection)
 		connection.Listen()
 	}
-	http.Handle(s.pattern, websocket.Handler(onConnected))
+//	http.Handle(s.pattern, websocket.Handler(onConnected))
+
+	http.HandleFunc(s.pattern,
+        func(w http.ResponseWriter, req *http.Request) {
+        	log.Println("HANDLE")
+            s := websocket.Server{Handler: websocket.Handler(onConnected)}
+            s.ServeHTTP(w, req)
+        })
+
 	log.Println("Created handler " + s.pattern)
 
 

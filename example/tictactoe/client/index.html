@@ -1,0 +1,90 @@
+<html>
+<head>
+    <title>websockett sample</title>
+    <script type="text/javascript">
+    // var wsUri = "ws://echo.websocket.org/";
+    var wsUri = "wss://ragtime-mypianoplayer.c9users.io/game";
+
+    var output;
+    var player;
+    var websocket;
+
+    function init() {
+        player = document.getElementById("player");
+        output = document.getElementById("output");
+        testWebSocket();
+
+        var sendbutton = document.getElementById("sendbutton");
+        sendbutton.onclick = function(evt){
+            var author = document.getElementById("author");
+            var body = document.getElementById("body");
+            doSend('{"author":"' + author.value + '","body":"' + body.value + '"}');
+//            doSend('{"author":"test","body":"hello"}')
+        };
+    }
+
+    function testWebSocket() {
+        websocket = new WebSocket(wsUri);
+        websocket.onopen = function(evt) {
+            onOpen(evt)
+        };
+        websocket.onclose = function(evt) {
+            onClose(evt)
+        };
+        websocket.onmessage = function(evt) {
+            onMessage(evt)
+        };
+        websocket.onerror = function(evt) {
+            onError(evt)
+        };
+    }
+
+    function onOpen(evt) {
+        writeToScreen("CONNECTED");
+    }
+
+    function onClose(evt) {
+
+        writeToScreen("DISCONNECTED");
+    }
+
+    function onMessage(evt) {
+        var cmd = JSON.parse(evt.data);
+        eval(cmd.body);
+       // writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data + ' </span>');
+    }
+
+    function onError(evt) {
+        writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+    }
+
+    function doSend(message) {
+        websocket.send(message);
+    }
+
+    function writeToScreen(message) {
+        var pre = document.createElement("p");
+        pre.style.wordWrap = "break-word";
+        pre.innerHTML = message;
+        output.appendChild(pre);
+    }
+
+//    window.addEventListener("load", init, false);
+
+    </script>
+</head>
+<body onload="init()">
+    <h2>WebSocket Test</h2>
+    <br/>
+    <br/>
+    <div id="player" style="position:absolute;">[-]</-></div>
+    <br/>
+    <br/>
+    <br/>
+    <br/>
+    <br/>
+    <br/>
+    <br/>
+    LOG:<div id="output"></div>
+</body>
+</html>

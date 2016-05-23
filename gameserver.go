@@ -73,9 +73,18 @@ func (s *GameServer) sendAll(msg *Message) {
 	}
 }
 
+func (s * GameServer) Start() {
+	go s.listen()
+	go s.tick()
+
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		panic("ListenAndServe: " + err.Error())
+	}
+}
+
 // Listen and serve.
 // It serves client connection and broadcast request.
-func (s *GameServer) Start() {
+func (s *GameServer) listen() {
 
 	log.Println("Listening server...")
 
@@ -94,19 +103,16 @@ func (s *GameServer) Start() {
 		s.Add(connection)
 		connection.Listen()
 	}
-//	http.Handle(s.pattern, websocket.Handler(onConnected))
+	http.Handle(s.pattern, websocket.Handler(onConnected))
 
-	http.HandleFunc(s.pattern,
-        func(w http.ResponseWriter, req *http.Request) {
-        	log.Println("HANDLE")
-            s := websocket.Server{Handler: websocket.Handler(onConnected)}
-            s.ServeHTTP(w, req)
-        })
+	// http.HandleFunc(s.pattern,
+ //       func(w http.ResponseWriter, req *http.Request) {
+ //       	log.Println("HANDLE")
+ //           s := websocket.Server{Handler: websocket.Handler(onConnected)}
+ //           s.ServeHTTP(w, req)
+ //       })
 
 	log.Println("Created handler " + s.pattern)
-
-
-	go s.Tick()
 
 	for {
 		select {
@@ -137,7 +143,7 @@ func (s *GameServer) Start() {
 }
 
 
-func (s* GameServer) Tick() {
+func (s* GameServer) tick() {
 	ticker := time.NewTicker(time.Second/60.0)
 	cnt := 1.0
 	for{

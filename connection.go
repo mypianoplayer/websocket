@@ -1,7 +1,7 @@
 package ragtime
 
 import (
-	"fmt"
+	// "fmt"
 	"io"
 	"log"
 	"golang.org/x/net/websocket"
@@ -11,20 +11,17 @@ const channelBufSize = 100
 
 var maxId int = 0
 
-// Chat Connection.
 type Connection struct {
 	id     int
-	ws     *websocket.Conn
+	conn   *websocket.Conn
 	server *GameServer
-	ch     chan *Message
-	doneCh chan bool
+	SendMessageCh  chan *Message
 }
 
-// Create new chat Connection.
-func NewConnection(ws *websocket.Conn, server *GameServer) *Connection {
+func NewConnection(conn *websocket.Conn, server *GameServer) *Connection {
 
-	if ws == nil {
-		panic("ws cannot be nil")
+	if conn == nil {
+		panic("conn cannot be nil")
 	}
 
 	if server == nil {
@@ -35,79 +32,57 @@ func NewConnection(ws *websocket.Conn, server *GameServer) *Connection {
 
 	maxId++
 	ch := make(chan *Message, channelBufSize)
-	doneCh := make(chan bool)
 
-	return &Connection{maxId, ws, server, ch, doneCh}
+	return &Connection{maxId, conn, server, ch}
 }
 
-func (c *Connection) Conn() *websocket.Conn {
-	return c.ws
-}
+// func (c *Connection) Conn() *websocket.Conn {
+// 	return c.conn
+// }
 
-func (c *Connection) Write(msg *Message) {
-	select {
-	case c.ch <- msg:
-	default:
-		c.server.Del(c)
-		err := fmt.Errorf("Connection %d is disconnected.", c.id)
-		c.server.Err(err)
-	}
-}
+// func (c *Connection) Write(msg *Message) {
+// 	select {
+// 	case c.SendMessageCh <- msg:
+// 	default:
+// 		c.server.DeleteConnectionCh <- c
+// 		err := fmt.Errorf("Connection %d is disconnected.", c.id)
+// 		c.server.ErrorCh <- err
+// 	}
+// }
 
-func (c *Connection) Done() {
-	c.doneCh <- true
-}
-
-// Listen Write and Read request via chanel
 func (c *Connection) Listen() {
 	go c.listenWrite()
 	c.listenRead()
 }
 
-// Listen write request via chanel
 func (c *Connection) listenWrite() {
-	log.Println("Listening write to Connection")
+
 	for {
 		select {
 
-		// send message to the Connection
-		case msg := <-c.ch:
-			// log.Println("Send:", msg)
-			websocket.JSON.Send(c.ws, msg)
+		case msg := <-c.SendMessageCh:
+			websocket.JSON.Send(c.conn, msg)
 
-		// receive done request
-		case <-c.doneCh:
-			c.server.Del(c)
-			c.doneCh <- true // for listenRead method
-			return
 		}
 	}
 }
 
-// Listen read request via chanel
 func (c *Connection) listenRead() {
-	log.Println("Listening read from Connection")
+
 	for {
 		select {
 
-		// receive done request
-		case <-c.doneCh:
-			c.server.Del(c)
-			c.doneCh <- true // for listenWrite method
-			return
-
-		// read data from websocket connection
 		default:
 			var msg Message
-			err := websocket.JSON.Receive(c.ws, &msg)
+			err := websocket.JSON.Receive(c.conn, &msg)
 			if err == io.EOF {
-				c.doneCh <- true
+				c.server.DeleteConnectionCh <- c
+				return
+
 			} else if err != nil {
-				c.server.Err(err)
-			} else if msg.Command == "close" {
-				c.doneCh <- true
+				c.server.ErrorCh <- err
 			} else {
-				c.server.SendAll(&msg)
+				c.server.SendAllCh <- &msg
 			}
 		}
 	}

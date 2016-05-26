@@ -1,4 +1,3 @@
-websocket
+Game Server with golang/websocket
 =========
 
-samples of websocket package

@@ -72,7 +72,7 @@ func (c *Connection) listenWrite() {
 
 		// send message to the Connection
 		case msg := <-c.ch:
-//			log.Println("Send:", msg)
+			// log.Println("Send:", msg)
 			websocket.JSON.Send(c.ws, msg)
 
 		// receive done request
@@ -104,7 +104,7 @@ func (c *Connection) listenRead() {
 				c.doneCh <- true
 			} else if err != nil {
 				c.server.Err(err)
-			} else if msg.Body == "close" {
+			} else if msg.Command == "close" {
 				c.doneCh <- true
 			} else {
 				c.server.SendAll(&msg)

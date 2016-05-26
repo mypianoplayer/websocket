@@ -151,7 +151,7 @@ func (s* GameServer) tick() {
 			case <-ticker.C:
 			left := 50 + math.Sin(cnt) * 30
 			top := 70 + math.Sin(cnt*0.7+3.4) * 30
-			msg := Message{"game","player.style.left = " + strconv.Itoa(int(left)) + ";player.style.top=" + strconv.Itoa(int(top))}
+			msg := Message{"server","all","javascript",[]string{"player.style.left = " + strconv.Itoa(int(left)) + ";player.style.top=" + strconv.Itoa(int(top))}}
 			cnt += 0.1
 			if( cnt > 500 ){ cnt = 0.0 }
 			s.SendAll(&msg)

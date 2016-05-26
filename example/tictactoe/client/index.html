@@ -14,13 +14,13 @@
         output = document.getElementById("output");
         testWebSocket();
 
-        var sendbutton = document.getElementById("sendbutton");
-        sendbutton.onclick = function(evt){
-            var author = document.getElementById("author");
-            var body = document.getElementById("body");
-            doSend('{"author":"' + author.value + '","body":"' + body.value + '"}');
+        // var sendbutton = document.getElementById("sendbutton");
+        // sendbutton.onclick = function(evt){
+        //     var author = document.getElementById("author");
+        //     var body = document.getElementById("body");
+        //     doSend('{"author":"' + author.value + '","body":"' + body.value + '"}');
 //            doSend('{"author":"test","body":"hello"}')
-        };
+        // };
     }
 
     function testWebSocket() {
@@ -50,7 +50,7 @@
 
     function onMessage(evt) {
         var cmd = JSON.parse(evt.data);
-        eval(cmd.body);
+        eval(cmd.arguments[0]);
        // writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data + ' </span>');
     }
 

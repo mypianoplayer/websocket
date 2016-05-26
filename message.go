@@ -1,10 +1,13 @@
 package ragtime
 
+
 type Message struct {
-	Author string `json:"author"`
-	Body   string `json:"body"`
+	From string `json:"from"`
+	To   string `json:"to"`
+	Command string `json:"command"`
+	Arguments []string `json:"arguments"`
 }
 
-func (self *Message) String() string {
-	return self.Author + " says " + self.Body
-}
+// func (self *Message) String() string {
+// 	return self.Author + " says " + self.Body
+// }

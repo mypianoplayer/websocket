@@ -3,15 +3,15 @@ package ragtime
 import (
 	"log"
 	"net/http"
-	"time"
-	"strconv"
-	"math"
+	// "time"
+	// "strconv"
+	// "math"
 //	"sync"
 	"golang.org/x/net/websocket"
 )
 
 // Chat server.
-type GameServer struct {
+type ConnectionManager struct {
 	pattern   string
 	connections   map[int]*Connection
 	AddConnectionCh     chan *Connection
@@ -21,14 +21,14 @@ type GameServer struct {
 }
 
 // Create new chat server.
-func NewGameServer(pattern string) *GameServer {
+func NewConnectionManager(pattern string) *ConnectionManager {
 	connections := make(map[int]*Connection)
 	addCh := make(chan *Connection)
 	delCh := make(chan *Connection)
 	sendAllCh := make(chan *Message)
 	errCh := make(chan error)
 
-	return &GameServer{
+	return &ConnectionManager{
 		pattern,
 		connections,
 		addCh,
@@ -39,22 +39,21 @@ func NewGameServer(pattern string) *GameServer {
 }
 
 
-func (s *GameServer) sendAll(msg *Message) {
-	for _, c := range s.connections {
+func (cm *ConnectionManager) sendAll(msg *Message) {
+	for _, c := range cm.connections {
 		c.SendMessageCh <- msg
 	}
 }
 
-func (s * GameServer) Start() {
-	go s.listen()
-	go s.tick()
+func (cm * ConnectionManager) Start() {
+	go cm.listen()
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic("ListenAndServe: " + err.Error())
 	}
 }
 
-func (s *GameServer) listen() {
+func (cm *ConnectionManager) listen() {
 
 	log.Println("Listening server...")
 
@@ -63,15 +62,15 @@ func (s *GameServer) listen() {
 		defer func() {
 			err := ws.Close()
 			if err != nil {
-				s.ErrorCh <- err
+				cm.ErrorCh <- err
 			}
 		}()
 
-		connection := NewConnection(ws, s)
-		s.AddConnectionCh <- connection
+		connection := NewConnection(ws, cm)
+		cm.AddConnectionCh <- connection
 		connection.Listen()
 	}
-	http.Handle(s.pattern, websocket.Handler(onConnected))
+	http.Handle(cm.pattern, websocket.Handler(onConnected))
 
 	// http.HandleFunc(s.pattern,
  //       func(w http.ResponseWriter, req *http.Request) {
@@ -84,41 +83,41 @@ func (s *GameServer) listen() {
 		select {
 
 		// Add new a client
-		case c := <-s.AddConnectionCh:
+		case c := <-cm.AddConnectionCh:
 			log.Println("Added new client")
-			s.connections[c.id] = c
-			log.Println("Now", len(s.connections), "connections connected.")
+			cm.connections[c.id] = c
+			log.Println("Now", len(cm.connections), "connections connected.")
 
 		// del a client
-		case c := <-s.DeleteConnectionCh:
+		case c := <-cm.DeleteConnectionCh:
 			log.Println("Delete client")
-			delete(s.connections, c.id)
+			delete(cm.connections, c.id)
 
 		// broadcast message for all connections
-		case msg := <-s.SendAllCh:
+		case msg := <-cm.SendAllCh:
 //			log.Println("Send all:", msg)
-			s.sendAll(msg)
+			cm.sendAll(msg)
 
-		case err := <-s.ErrorCh:
+		case err := <-cm.ErrorCh:
 			log.Println("Error:", err.Error())
 		}
 	}
 }
 
 
-func (s* GameServer) tick() {
-	ticker := time.NewTicker(time.Second/60.0)
-	cnt := 1.0
-	for{
-		select {
-			case <-ticker.C:
-			left := 50 + math.Sin(cnt) * 30
-			top := 70 + math.Sin(cnt*0.7+3.4) * 30
-			msg := Message{"server","all","javascript",[]string{"player.style.left = " + strconv.Itoa(int(left)) + ";player.style.top=" + strconv.Itoa(int(top))}}
-			cnt += 0.1
-			if( cnt > 500 ){ cnt = 0.0 }
-			s.SendAllCh <- &msg
-		}
-	}
+// func (cm* ConnEctionManager) tick() {
+// 	ticker := time.NewTicker(time.Second/60.0)
+// 	cnt := 1.0
+// 	for{
+// 		select {
+// 			case <-ticker.C:
+// 			left := 50 + math.Sin(cnt) * 30
+// 			top := 70 + math.Sin(cnt*0.7+3.4) * 30
+// 			msg := Message{"server","all","javascript",[]string{"player.style.left = " + strconv.Itoa(int(left)) + ";player.style.top=" + strconv.Itoa(int(top))}}
+// 			cnt += 0.1
+// 			if( cnt > 500 ){ cnt = 0.0 }
+// 			s.SendAllCh <- &msg
+// 		}
+// 	}
 
-}
+// }

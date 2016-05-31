@@ -14,7 +14,7 @@ func main() {
 	// log.Println(wd)
 
 	http.Handle("/", http.FileServer(http.Dir("../client/")))
-	server := ragtime.NewGameServer("/game")
+	server := ragtime.NewConnectionManager("/game")
 	server.Start()
 
 }

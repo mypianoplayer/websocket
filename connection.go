@@ -14,17 +14,17 @@ var maxId int = 0
 type Connection struct {
 	id     int
 	conn   *websocket.Conn
-	server *GameServer
+	connectionManager *ConnectionManager
 	SendMessageCh  chan *Message
 }
 
-func NewConnection(conn *websocket.Conn, server *GameServer) *Connection {
+func NewConnection(conn *websocket.Conn, cm *ConnectionManager) *Connection {
 
 	if conn == nil {
 		panic("conn cannot be nil")
 	}
 
-	if server == nil {
+	if cm == nil {
 		panic("server cannot be nil")
 	}
 
@@ -33,7 +33,7 @@ func NewConnection(conn *websocket.Conn, server *GameServer) *Connection {
 	maxId++
 	ch := make(chan *Message, channelBufSize)
 
-	return &Connection{maxId, conn, server, ch}
+	return &Connection{maxId, conn, cm, ch}
 }
 
 // func (c *Connection) Conn() *websocket.Conn {
@@ -76,13 +76,13 @@ func (c *Connection) listenRead() {
 			var msg Message
 			err := websocket.JSON.Receive(c.conn, &msg)
 			if err == io.EOF {
-				c.server.DeleteConnectionCh <- c
+				c.connectionManager.DeleteConnectionCh <- c
 				return
 
 			} else if err != nil {
-				c.server.ErrorCh <- err
+				c.connectionManager.ErrorCh <- err
 			} else {
-				c.server.SendAllCh <- &msg
+				c.connectionManager.SendAllCh <- &msg
 			}
 		}
 	}

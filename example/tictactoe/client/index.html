@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>websockett sample</title>
+    <title>TIC TAC TOE</title>
     <script type="text/javascript">
     // var wsUri = "ws://echo.websocket.org/";
     var wsUri = "wss://ragtime-mypianoplayer.c9users.io/game";
@@ -14,13 +14,14 @@
         output = document.getElementById("output");
         testWebSocket();
 
-        // var sendbutton = document.getElementById("sendbutton");
-        // sendbutton.onclick = function(evt){
-        //     var author = document.getElementById("author");
-        //     var body = document.getElementById("body");
-        //     doSend('{"author":"' + author.value + '","body":"' + body.value + '"}');
-//            doSend('{"author":"test","body":"hello"}')
-        // };
+        var sendbutton = document.getElementById("output");
+        sendbutton.onclick = function(evt){
+        doSend('{"objectID":0,"methodID":0,"arguments":[""]}');
+            // var author = document.getElementById("author");
+            // var body = document.getElementById("body");
+            // doSend('{"author":"' + author.value + '","body":"' + body.value + '"}');
+            // doSend('{"author":"test","body":"hello"}')
+        };
     }
 
     function testWebSocket() {

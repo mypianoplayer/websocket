@@ -10,11 +10,14 @@ import (
 type Player struct {
     game.Object
     component.Position
+    component.View
 }
 
 func NewPlayer() *Player {
     return &Player {
-
+        game.Object{},
+        component.Position{},
+        *component.NewView("{-]"),
     }
 }
 

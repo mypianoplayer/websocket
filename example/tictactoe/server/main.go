@@ -2,11 +2,8 @@ package main
 
 import (
 	"log"
-	"net/http"
-	"ragtime/game"
-	"ragtime/server"
-	// "os"
 )
+
 
 
 const (
@@ -16,6 +13,10 @@ const (
 func main() {
 	log.SetFlags(log.Lshortfile)
 
+	game := NewGame()
+
+	game.Start()
+
 	// wd,_ := os.Getwd()
 	// log.Println(wd)
 	// sm := ragtime.NewSceneManager()
@@ -24,16 +25,5 @@ func main() {
 	// sm.Start()
 	// sm.SetSceneCh <- ts
 
-	player := NewPlayer()
-
-	scene := game.NewScene()
-	scene.AddObject(player)
-
-
-	http.Handle("/", http.FileServer(http.Dir("../client/")))
-	sv := server.New("/game", scene.MsgCh )
-
-	scene.Start()
-	sv.Start()
 
 }

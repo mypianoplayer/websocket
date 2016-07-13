@@ -16,7 +16,7 @@
 
         var sendbutton = document.getElementById("output");
         sendbutton.onclick = function(evt){
-        doSend('{"objectID":0,"methodID":0,"arguments":[""]}');
+        doSend('["start"]');
             // var author = document.getElementById("author");
             // var body = document.getElementById("body");
             // doSend('{"author":"' + author.value + '","body":"' + body.value + '"}');
@@ -41,29 +41,39 @@
     }
 
     function onOpen(evt) {
-        writeToScreen("CONNECTED");
+        log("CONNECTED");
     }
 
     function onClose(evt) {
 
-        writeToScreen("DISCONNECTED");
+        log("DISCONNECTED");
     }
 
     function onMessage(evt) {
         var cmd = JSON.parse(evt.data);
-        eval(cmd.arguments[0]);
+        log(cmd);
        // writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data + ' </span>');
+
+       // createObject( objectid, type )
+       // command( objectid, command )
+       if( cmd.params[0]=="newObject" ) {
+            var game = document.getElementById("game");
+            var obj = document.createElement("div");
+            obj.textContent = cmd.params[1];
+            obj.style.position="absolute";
+            game.appendChild(obj);
+       }
     }
 
     function onError(evt) {
-        writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+        log('<span style="color: red;">ERROR:</span> ' + evt.data);
     }
 
     function doSend(message) {
         websocket.send(message);
     }
 
-    function writeToScreen(message) {
+    function log(message) {
         var pre = document.createElement("p");
         pre.style.wordWrap = "break-word";
         pre.innerHTML = message;
@@ -75,16 +85,8 @@
     </script>
 </head>
 <body onload="init()">
-    <h2>WebSocket Test</h2>
-    <br/>
-    <br/>
-    <div id="player" style="position:absolute;">[-]</-></div>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
-    <br/>
+    <h2>Title</h2>
+    <div id="game"></div>
     <br/>
     LOG:<div id="output"></div>
 </body>

@@ -6,7 +6,7 @@ import (
 
 
 type Position struct {
-    position [2]float32
+    pos [2]float32
 }
 
 func (p *Position) IsDeleted() bool {
@@ -15,6 +15,8 @@ func (p *Position) IsDeleted() bool {
 
 func (p *Position) Update() {
     log.Println("pos update")
+
+    // server.SendAll pos
 }
 
 func (p *Position) UpdateOrder() int {

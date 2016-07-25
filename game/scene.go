@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 	// "reflect"
-	"ragtime/server"
+	"github.com/mypianoplayer/ragtime/server"
 )
 
 type ComponentArray struct {

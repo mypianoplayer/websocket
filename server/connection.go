@@ -2,20 +2,20 @@ package server
 
 import (
 	// "fmt"
+	"golang.org/x/net/websocket"
 	"io"
 	"log"
-	"golang.org/x/net/websocket"
 )
- 
+
 const channelBufSize = 100
 
 var maxId int = 0
 
 type Connection struct {
-	id     int
-	conn   *websocket.Conn
-	SendCh  chan *Message
-	RecvCh  chan *Message
+	id      int
+	conn    *websocket.Conn
+	sendCh  chan *Message
+	recvCh  chan *Message
 	deleted bool
 }
 
@@ -33,6 +33,14 @@ func NewConnection(conn *websocket.Conn, recvCh chan *Message) *Connection {
 	return &Connection{maxId, conn, sendCh, recvCh, false}
 }
 
+func (c *Connection) SendCh() chan *Message {
+	return c.sendCh
+}
+
+func (c *Connection) RecvCh() chan *Message {
+	return c.recvCh
+}
+
 func (c *Connection) Listen() {
 	log.Println("conn listen")
 	go c.listenWrite()
@@ -44,7 +52,7 @@ func (c *Connection) listenWrite() {
 	for {
 		select {
 
-		case msg := <-c.SendCh:
+		case msg := <-c.sendCh:
 			websocket.JSON.Send(c.conn, msg)
 
 		}
@@ -60,15 +68,16 @@ func (c *Connection) listenRead() {
 		default:
 			var msg Message
 			err := websocket.JSON.Receive(c.conn, &msg)
-			log.Println("msg")
 			if err == io.EOF {
 				c.deleted = true
 				return
 
 			} else if err != nil {
+				log.Println(err)
 				// c.connectionManager.ErrorCh <- err
 			} else {
-				c.RecvCh <- &msg
+				log.Println("msg")
+				c.recvCh <- &msg
 			}
 		}
 	}

@@ -5,19 +5,54 @@ import (
     "reflect"
 )
 
-type ComponentHolder interface {
-	Component(name string) Component
-	EachComponent() chan Component
+// type ComponentHolder interface {
+// 	Component(name string) Component
+// 	EachComponent() chan Component
+// }
+
+type Object interface {
+	Name() string
 }
 
-type Object struct {
+var currentID int
+
+type ObjectBase struct {
+	id   int
+	name string
 }
 
-func (o *Object) Component(name string) Component {
-    v := reflect.ValueOf(o)
-    f := v.FieldByName(name)
+func NewObject(nm string) *ObjectBase {
+	currentID++
+	return &ObjectBase{
+		id:   currentID,
+		name: nm,
+	}
+}
 
-    return f.Interface().(Component)
+func (o *ObjectBase) Name() string {
+	return o.name
+}
+
+func GetComponent(o interface{}, name string) Component {
+	v := reflect.ValueOf(o)
+	f := v.FieldByName(name)
+
+	return f.Interface().(Component)
+}
+
+func SetupComponent(o interface{}) {
+
+	v := reflect.ValueOf(o)
+	n := v.Elem().NumField()
+	for i := 0; i < n; i++ {
+		if v.Elem().Field(i).CanAddr() {
+			ii := v.Elem().Field(i).Addr().Interface()
+			comp, ok := ii.(Component)
+			if ok {
+				comp.SetObject(o.(*Object))
+			}
+		}
+	}
 }
 
 func EachComponent(o interface{}) chan Component {

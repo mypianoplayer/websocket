@@ -6,28 +6,39 @@ import (
 	// "time"
 	// "strconv"
 	// "math"
-//	"sync"
+	//	"sync"
 	"golang.org/x/net/websocket"
 )
 
-// type MessageReceiver interface {
-// 	OnMessage(m *Message)
-// }
-
 type Server struct {
-	pattern   string
-	connections   map[int]*Connection
+	pattern     string
+	connections map[int]*Connection
 
-	AddConnectionCh     chan *Connection
-	DeleteConnectionCh     chan *Connection
-	SendAllCh chan *Message
-	RecvCh chan* Message
-	ErrorCh     chan error
-
-	MsgCh chan *Message
+	addConnCh chan *Connection
+	delConnCh chan *Connection
+	sendAllCh chan *Message
+	recvCh    chan *Message
+	errCh     chan error
 }
 
-func New(pattern string, msgch chan *Message) *Server {
+func (s *Server) AddConnCh() chan *Connection {
+	return s.addConnCh
+}
+
+func (s *Server) DelConnCh() chan *Connection {
+	return s.delConnCh
+}
+
+func (s *Server) SendAllCh() chan *Message {
+	return s.sendAllCh
+}
+
+func (s *Server) RecvCh() chan *Message {
+	return s.recvCh
+}
+
+
+func New(pattern string) *Server {
 	return &Server{
 		pattern,
 		make(map[int]*Connection),
@@ -36,17 +47,16 @@ func New(pattern string, msgch chan *Message) *Server {
 		make(chan *Message),
 		make(chan *Message),
 		make(chan error),
-		make(chan *Message),
 	}
 }
 
 func (s *Server) sendAll(msg *Message) {
 	for _, c := range s.connections {
-		c.SendCh <- msg
+		c.SendCh() <- msg
 	}
 }
 
-func (s * Server) Start() {
+func (s *Server) Start() {
 	go s.listen()
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {
@@ -63,12 +73,12 @@ func (s *Server) listen() {
 		defer func() {
 			err := ws.Close()
 			if err != nil {
-				s.ErrorCh <- err
+				s.errCh <- err
 			}
 		}()
 
-		connection := NewConnection(ws, s.RecvCh)
-		s.AddConnectionCh <- connection
+		connection := NewConnection(ws, s.recvCh)
+		s.addConnCh <- connection
 		connection.Listen()
 	}
 	http.Handle(s.pattern, websocket.Handler(onConnected))
@@ -76,26 +86,24 @@ func (s *Server) listen() {
 	for {
 		select {
 
-		case c := <-s.AddConnectionCh:
+		case c := <-s.addConnCh:
 			log.Println("Added new client")
 			s.connections[c.id] = c
 			log.Println("Now", len(s.connections), "connections connected.")
 
-		case c := <-s.DeleteConnectionCh:
+		case c := <-s.delConnCh:
 			log.Println("Delete client")
 			delete(s.connections, c.id)
 
-		case msg := <-s.RecvCh:
-			log.Println("received:")
-			s.MsgCh <- msg
+		// case msg := <-s.recvCh:
+		// 	log.Println("received:")
+		// 	s.recvCh <- msg
 
-		case msg := <-s.SendAllCh:
+		case msg := <-s.sendAllCh:
 			s.sendAll(msg)
 
-		case err := <-s.ErrorCh:
+		case err := <-s.errCh:
 			log.Println("Error:", err.Error())
 		}
 	}
 }
-
-

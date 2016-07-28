@@ -42,6 +42,11 @@ func GetComponent(o interface{}, name string) Component {
 
 func SetupComponent(o interface{}) {
 
+    _, ok := o.(Object)
+    if !ok {
+        return
+    }
+
 	v := reflect.ValueOf(o)
 	n := v.Elem().NumField()
 	for i := 0; i < n; i++ {
@@ -49,13 +54,19 @@ func SetupComponent(o interface{}) {
 			ii := v.Elem().Field(i).Addr().Interface()
 			comp, ok := ii.(Component)
 			if ok {
-				comp.SetObject(o.(*Object))
+				comp.SetObject(o.(Object))
 			}
 		}
 	}
 }
 
 func EachComponent(o interface{}) chan Component {
+    
+    _, ok := o.(Object)
+    if !ok {
+        return nil
+    }
+    
     ch := make(chan Component)
     v := reflect.ValueOf(o)
     log.Println(v.Kind())

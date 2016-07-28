@@ -1,16 +1,20 @@
 package game
 
 type Component interface {
-	SetObject(o *Object)
+	SetObject(o Object)
 	UpdateOrder() int
 	Start()
 	Update()
 }
 
 type ComponentBase struct {
-	object *Object
+	object Object
 }
 
-func (c *ComponentBase) SetObject(o *Object) {
+func NewComponent() *ComponentBase {
+	return &ComponentBase{nil}
+}
+
+func (c *ComponentBase) SetObject(o Object) {
 	c.object = o
 }

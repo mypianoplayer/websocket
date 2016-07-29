@@ -34,44 +34,37 @@ func (o *ObjectBase) Name() string {
 }
 
 func GetComponent(o interface{}, name string) Component {
+    
 	v := reflect.ValueOf(o)
-	f := v.FieldByName(name)
-
-	return f.Interface().(Component)
+	f := v.Elem().FieldByName(name)
+    if f.CanAddr() {
+        return f.Addr().Interface().(Component)
+    }
+    
+    log.Println("canAddr failed")
+    return nil
 }
 
 func SetupComponent(o interface{}) {
 
-    _, ok := o.(Object)
-    if !ok {
-        return
+    for comp := range EachComponent(o) {
+        comp.SetObject(o.(Object))
+        log.Println("set object")
     }
-
-	v := reflect.ValueOf(o)
-	n := v.Elem().NumField()
-	for i := 0; i < n; i++ {
-		if v.Elem().Field(i).CanAddr() {
-			ii := v.Elem().Field(i).Addr().Interface()
-			comp, ok := ii.(Component)
-			if ok {
-				comp.SetObject(o.(Object))
-			}
-		}
-	}
 }
 
 func EachComponent(o interface{}) chan Component {
     
-    _, ok := o.(Object)
-    if !ok {
-        return nil
-    }
+    // _, ok := o.(Object)
+    // if !ok {
+    //     log.Println("o is not Object")
+    //     return nil
+    // }
     
     ch := make(chan Component)
     v := reflect.ValueOf(o)
-    log.Println(v.Kind())
+    // log.Println(v.Kind())
     n := v.Elem().NumField()
-    log.Println("numf", n)
     i := 0
     go func() {
         for {
@@ -80,14 +73,18 @@ func EachComponent(o interface{}) chan Component {
                 break;
             }
 
-            log.Println(v.Elem().Field(i))
-
             if v.Elem().Field(i).CanAddr() {
-                ii := v.Elem().Field(i).Addr().Interface()
-                comp, ok := ii.(Component)
-                if ok {
-                    log.Println("OK")
-                    ch <- comp
+            // log.Println("canaddr  ", v.Elem().Field(i).Type(), v.Elem().Field(i).Kind())
+
+                a := v.Elem().Field(i).Addr()
+                if a.CanInterface() {
+            // log.Println("caninterface  ", v.Elem().Field(i).Type())
+                    in := a.Interface()
+                    comp, ok := in.(Component)
+                    if ok {
+                        log.Println(v.Elem().Field(i).Type(), " OK" )
+                        ch <- comp
+                    }
                 }
             }
             i++
@@ -96,6 +93,7 @@ func EachComponent(o interface{}) chan Component {
 
     return ch
 }
+
 
 // func (o *Object) EachComponent() chan Component {
 //     ch := make(chan Component)

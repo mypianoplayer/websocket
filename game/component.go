@@ -2,6 +2,7 @@ package game
 
 type Component interface {
 	SetObject(o Object)
+	Object() Object
 	UpdateOrder() int
 	Start()
 	Update()
@@ -17,4 +18,8 @@ func NewComponent() *ComponentBase {
 
 func (c *ComponentBase) SetObject(o Object) {
 	c.object = o
+}
+
+func (c *ComponentBase) Object() Object {
+	return c.object
 }

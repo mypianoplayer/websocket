@@ -61,8 +61,8 @@ func (c *Connection) listenWrite() {
 
 func (c *Connection) listenRead() {
 
+	log.Println("listenRead...")
 	for {
-		log.Println("listenRead...")
 		select {
 
 		default:

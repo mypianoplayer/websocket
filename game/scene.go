@@ -61,7 +61,7 @@ func (s *Scene) SetReceiver(r MessageReceiver) {
 }
 
 func (s *Scene) Update() {
-	log.Println("scene update")
+	// log.Println("scene update")
 
 	for _, comps := range s.startComponents.Get() {
 		for _, c := range comps {
@@ -99,7 +99,7 @@ func (s *Scene) Start() {
 }
 
 func (s *Scene) listen() {
-	ticker := time.NewTicker(time.Second)///60.0)
+	ticker := time.NewTicker(time.Second/60.0)
 
 	for {
 		select {

@@ -77,7 +77,7 @@ func (s *Server) listen() {
 			}
 		}()
 
-		connection := NewConnection(ws, s.recvCh)
+		connection := NewConnection(ws, s)
 		s.addConnCh <- connection
 		connection.Listen()
 	}

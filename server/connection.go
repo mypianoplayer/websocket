@@ -15,11 +15,10 @@ type Connection struct {
 	id      int
 	conn    *websocket.Conn
 	sendCh  chan *Message
-	recvCh  chan *Message
-	deleted bool
+	server *Server
 }
 
-func NewConnection(conn *websocket.Conn, recvCh chan *Message) *Connection {
+func NewConnection(conn *websocket.Conn, s *Server) *Connection {
 
 	if conn == nil {
 		panic("conn cannot be nil")
@@ -30,15 +29,15 @@ func NewConnection(conn *websocket.Conn, recvCh chan *Message) *Connection {
 	maxId++
 	sendCh := make(chan *Message, channelBufSize)
 
-	return &Connection{maxId, conn, sendCh, recvCh, false}
+	return &Connection{
+		id:maxId,
+		conn:conn,
+		sendCh:sendCh,
+		server:s}
 }
 
 func (c *Connection) SendCh() chan *Message {
 	return c.sendCh
-}
-
-func (c *Connection) RecvCh() chan *Message {
-	return c.recvCh
 }
 
 func (c *Connection) Listen() {
@@ -69,7 +68,7 @@ func (c *Connection) listenRead() {
 			var msg Message
 			err := websocket.JSON.Receive(c.conn, &msg)
 			if err == io.EOF {
-				c.deleted = true
+				c.server.DelConnCh() <- c
 				return
 
 			} else if err != nil {
@@ -77,7 +76,7 @@ func (c *Connection) listenRead() {
 				// c.connectionManager.ErrorCh <- err
 			} else {
 				log.Println("msg")
-				c.recvCh <- &msg
+				c.server.RecvCh() <- &msg
 			}
 		}
 	}

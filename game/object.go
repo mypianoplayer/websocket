@@ -21,7 +21,7 @@ type ObjectBase struct {
 	name string
 }
 
-func NewObject(nm string) *ObjectBase {
+func NewObjectBase(nm string) *ObjectBase {
 	currentID++
 	return &ObjectBase{
 		id:   currentID,
@@ -33,7 +33,7 @@ func (o *ObjectBase) Name() string {
 	return o.name
 }
 
-func GetComponent(o interface{}, name string) Component {
+func GetComponent(o Object, name string) Component {
     
 	v := reflect.ValueOf(o)
 	f := v.Elem().FieldByName(name)
@@ -45,15 +45,15 @@ func GetComponent(o interface{}, name string) Component {
     return nil
 }
 
-func SetupComponent(o interface{}) {
+func SetupComponent(o Object) {
 
     for comp := range EachComponent(o) {
-        comp.SetObject(o.(Object))
+        comp.SetObject(o)
         log.Println("set object")
     }
 }
 
-func EachComponent(o interface{}) chan Component {
+func EachComponent(o Object) chan Component {
     
     // _, ok := o.(Object)
     // if !ok {

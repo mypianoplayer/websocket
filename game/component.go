@@ -10,10 +10,14 @@ type Component interface {
 
 type ComponentBase struct {
 	object Object
+	updateOrder int
 }
 
-func NewComponent() *ComponentBase {
-	return &ComponentBase{nil}
+func NewComponentBase(updateOrder int) *ComponentBase {
+	return &ComponentBase{
+		object:nil,
+		updateOrder:updateOrder,
+	}
 }
 
 func (c *ComponentBase) SetObject(o Object) {
@@ -22,4 +26,8 @@ func (c *ComponentBase) SetObject(o Object) {
 
 func (c *ComponentBase) Object() Object {
 	return c.object
+}
+
+func (c *ComponentBase) UpdateOrder() int {
+	return c.updateOrder
 }

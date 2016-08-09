@@ -67,6 +67,7 @@ func (c *Connection) listenRead() {
 		default:
 			var msg Message
 			err := websocket.JSON.Receive(c.conn, &msg)
+			msg.ID = c.id
 			if err == io.EOF {
 				c.server.DelConnCh() <- c
 				return

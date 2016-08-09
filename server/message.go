@@ -2,6 +2,7 @@ package server
 
 
 type Message struct {
+    ID int
 	Params []string `json:"params"`
 }
 

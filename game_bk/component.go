@@ -1,9 +1,6 @@
 package game
 
-type ComponentType int
-
 type Component interface {
-	ComponentType() ComponentType
 	SetObject(o Object)
 	Object() Object
 	UpdateOrder() int
@@ -13,14 +10,12 @@ type Component interface {
 
 type ComponentBase struct {
 	object Object
-	componentType ComponentType
 	updateOrder int
 }
 
-func NewComponentBase(componentType ComponentType,updateOrder int) *ComponentBase {
+func NewComponentBase(updateOrder int) *ComponentBase {
 	return &ComponentBase{
 		object:nil,
-		componentType:componentType,
 		updateOrder:updateOrder,
 	}
 }
@@ -35,8 +30,4 @@ func (c *ComponentBase) Object() Object {
 
 func (c *ComponentBase) UpdateOrder() int {
 	return c.updateOrder
-}
-
-func (c *ComponentBase) ComponentType() ComponentType {
-	return c.componentType
 }

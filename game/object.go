@@ -1,8 +1,8 @@
 package game
 
 import (
-    "log"
-    "reflect"
+    _ "log"
+    _ "reflect"
 )
 
 // type ComponentHolder interface {
@@ -10,15 +10,20 @@ import (
 // 	EachComponent() chan Component
 // }
 
+type ComponentMap map[ComponentType]Component
+
 type Object interface {
 	Name() string
+	Components() ComponentMap
 }
+
 
 var currentID int
 
 type ObjectBase struct {
 	id   int
 	name string
+	components ComponentMap
 }
 
 func NewObjectBase(nm string) *ObjectBase {
@@ -26,6 +31,7 @@ func NewObjectBase(nm string) *ObjectBase {
 	return &ObjectBase{
 		id:   currentID,
 		name: nm,
+		components: make(ComponentMap, 30),
 	}
 }
 
@@ -33,66 +39,60 @@ func (o *ObjectBase) Name() string {
 	return o.name
 }
 
-func GetComponent(o Object, name string) Component {
-    
-	v := reflect.ValueOf(o)
-	f := v.Elem().FieldByName(name)
-    if f.CanAddr() {
-        return f.Addr().Interface().(Component)
-    }
-    
-    log.Println("canAddr failed")
-    return nil
+func (o *ObjectBase) AddComponent(c Component) {
+	o.components[c.ComponentType()] = c
 }
 
-func SetupComponent(o Object) {
+func (o *ObjectBase) Components() ComponentMap {
+	return o.components
+}
 
-    for comp := range EachComponent(o) {
+func (o *ObjectBase)SetupComponent() {
+    for _, comp := range o.components {
         comp.SetObject(o)
-        log.Println("set object")
     }
 }
 
-func EachComponent(o Object) chan Component {
+// func EachComponent(o Object) chan Component {
     
-    // _, ok := o.(Object)
-    // if !ok {
-    //     log.Println("o is not Object")
-    //     return nil
-    // }
+//     // _, ok := o.(Object)
+//     // if !ok {
+//     //     log.Println("o is not Object")
+//     //     return nil
+//     // }
     
-    ch := make(chan Component)
-    v := reflect.ValueOf(o)
-    // log.Println(v.Kind())
-    n := v.Elem().NumField()
-    i := 0
-    go func() {
-        for {
-            if i >= n {
-                close(ch)
-                break;
-            }
+//     ch := make(chan Component)
+//     v := reflect.ValueOf(o)
+//     log.Println(v.Kind())
+//     n := v.Elem().NumField()
+//     i := 0
+//     go func() {
+//         for {
+//             if i >= n {
+//                 close(ch)
+//                 break;
+//             }
 
-            if v.Elem().Field(i).CanAddr() {
-            // log.Println("canaddr  ", v.Elem().Field(i).Type(), v.Elem().Field(i).Kind())
+//             if v.Elem().Field(i).CanAddr() {
+//             // log.Println("canaddr  ", v.Elem().Field(i).Type(), v.Elem().Field(i).Kind())
 
-                a := v.Elem().Field(i).Addr()
-                if a.CanInterface() {
-            // log.Println("caninterface  ", v.Elem().Field(i).Type())
-                    in := a.Interface()
-                    comp, ok := in.(Component)
-                    if ok {
-                        log.Println(v.Elem().Field(i).Type(), " OK" )
-                        ch <- comp
-                    }
-                }
-            }
-            i++
-        }
-    }()
+//                 a := v.Elem().Field(i).Addr()
+//                 if a.CanInterface() {
+//             // log.Println("caninterface  ", v.Elem().Field(i).Type())
+//                     in := a.Interface()
+//                     comp, ok := in.(Component)
+//                     if ok {
+//                         log.Println(v.Elem().Field(i).Type(), " OK" )
+//                         ch <- comp
+//                     }
+//                 }
+//             }
+//             i++
+//         }
+//     }()
 
-    return ch
-}
+//     return ch
+// }
 
 
 // func (o *Object) EachComponent() chan Component {

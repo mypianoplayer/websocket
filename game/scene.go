@@ -3,6 +3,7 @@ package game
 import (
 	"log"
 	"time"
+	"sort"
 	// "reflect"
 	"github.com/mypianoplayer/ragtime/server"
 )
@@ -12,44 +13,64 @@ type MessageReceiver interface {
 	OnMessage(m *server.Message)
 }
 
-// ComponentArray
-type ComponentArray struct {
-	elms [][]Component
-}
+type ComponentArray []Component
 
-func (a ComponentArray) Get() [][]Component {
-	return a.elms
-}
-
-func (a *ComponentArray) Add(idx int, c Component) {
-
-	l := len(a.elms)
-	if l < idx+1 {
-		a.elms = append(a.elms, make([][]Component, idx+1-l)...)
+func (ca ComponentArray) updateOrder() int {
+	if len(ca) <= 0 {
+		log.Println("ComponentArray size 0")
 	}
-	a.elms[idx] = append(a.elms[idx], c)
+	return ca[0].UpdateOrder()
 }
 
-func (a *ComponentArray) Clear() {
-	a.elms = nil
+type Components []ComponentArray
+
+func (comps Components) Len() int {
+	return len(comps)
+}
+
+func (comps Components) Swap(i, j int) {
+	comps[i],comps[j] = comps[j],comps[i]
+}
+
+func (comps Components) Less(i, j int) bool {
+	return comps[i].updateOrder() < comps[j].updateOrder()
+}
+
+func (comps Components) Add(c Component) Components {
+
+	var exist bool
+	for i := 0; i < len(comps); i++ {
+		if comps[i].updateOrder() == c.UpdateOrder() {
+			comps[i] = append( comps[i], c )
+			exist = true
+		}
+	}
+	
+	if !exist {
+		ca := make(ComponentArray, 0, 10)
+		ca = append(ca, c)
+		comps = append( comps, ca )
+		sort.Sort(comps)
+	}
+	
+	return comps
 }
 
 // Scene
 type Scene struct {
 	objects    []Object
-	startComponents ComponentArray
-	components ComponentArray
+	startComponents Components
+	components Components
 
 	recvCh chan *server.Message
 	receiver MessageReceiver
-	// get object by name,id,tag...
 }
 
 func NewScene(recvCh chan *server.Message, receiver MessageReceiver) *Scene {
 	s := &Scene{
 		objects:make([]Object, 0, 50),
-		startComponents:ComponentArray{nil},
-		components:ComponentArray{nil},
+		startComponents:make(Components, 0, 10),
+		components:make(Components, 0, 10),
 		recvCh:recvCh,
 		receiver:receiver,
 	}
@@ -61,18 +82,18 @@ func (s *Scene) SetReceiver(r MessageReceiver) {
 }
 
 func (s *Scene) Update() {
-	// log.Println("scene update")
+//	log.Println("scene update")
 
-	for _, comps := range s.startComponents.Get() {
-		for _, c := range comps {
+	for _,comps := range s.startComponents {
+		for _,c := range comps {
 			c.Start()
 		}
 	}
 	
-	s.startComponents.Clear()
+	s.startComponents = nil
 
-	for _, comps := range s.components.Get() {
-		for _, c := range comps {
+	for _,comps := range s.components {
+		for _,c := range comps {
 			c.Update()
 		}
 	}
@@ -82,14 +103,12 @@ func (s *Scene) Update() {
 func (s *Scene) AddObject(o Object) {
 	s.objects = append(s.objects, o)
 	
-	for c := range EachComponent(o) {
-		order := c.UpdateOrder()
-		s.startComponents.Add(order, c)
+	for _,c := range o.Components() {
+		s.startComponents = s.startComponents.Add(c)
 	}
 	
-	for c := range EachComponent(o) {
-		order := c.UpdateOrder()
-		s.components.Add(order, c)
+	for _,c := range o.Components() {
+		s.components = s.components.Add(c)
 	}
 }
 

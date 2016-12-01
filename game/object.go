@@ -41,16 +41,11 @@ func (o *ObjectBase) Name() string {
 
 func (o *ObjectBase) AddComponent(c Component) {
 	o.components[c.ComponentType()] = c
+	c.SetObject(o)
 }
 
 func (o *ObjectBase) Components() ComponentMap {
 	return o.components
-}
-
-func (o *ObjectBase)SetupComponent() {
-    for _, comp := range o.components {
-        comp.SetObject(o)
-    }
 }
 
 // func EachComponent(o Object) chan Component {
